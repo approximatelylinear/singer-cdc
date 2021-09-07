@@ -1,0 +1,73 @@
+version: '3.1'
+
+# Use postgres/example user/password credentials
+
+services:
+
+  # db:
+  #   image: postgres
+  #   restart: always
+  #   environment:
+  #     POSTGRES_PASSWORD: example
+  #   volumes:
+  #     - type: bind
+  #       source: ./docker-entrypoint-initdb.d
+  #       target: /docker-entrypoint-initdb.d
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  master:
+    build: ./master
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    networks:
+      - db
+    ports:
+      - "5500:5432"
+    environment:
+      REP_USER: rep_user
+      REP_PASSWORD: rep_password
+      REP_DB: rep_test
+      POSTGRES_PASSWORD: example
+    # volumes:
+    #   - type: bind
+    #     source: ./master/setup.sh
+    #     target: /docker-entrypoint-initdb.d/setup.sh
+
+  listener:
+    build: ./listener
+    command: /listen.sh
+    networks:
+      - db
+    environment:
+      - PGHOST=master
+      - PGUSER=rep_user
+      - PGPASSWORD=rep_password
+      - PGAPPNAME=rep_test_app
+      - PGSSLMODE=require
+      - REP_DB=rep_test
+      - REP_SLOT=rep_test_slot
+
+  singer:
+    build: ./singer
+    command: /run.sh
+    networks:
+      - db
+    environment:
+      - PGHOST=master
+      - PGUSER=rep_user
+      - PGPASSWORD=rep_password
+      - PGAPPNAME=rep_test_app
+      - PGSSLMODE=require
+      - REP_DB=rep_test
+      - REP_SLOT=rep_test_slot
+  # export TAP_POSTGRES_HOST=<postgres-host>
+  # export TAP_POSTGRES_PORT=<postgres-port>
+  # export TAP_POSTGRES_USER=<postgres-user>
+  # export TAP_POSTGRES_PASSWORD=<postgres-password>
+
+networks:
+  db:
