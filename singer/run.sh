@@ -21,7 +21,7 @@ cat <<EOF > "config.json"
 }
 EOF
 
-# tap-postgres -c config.json --discover > properties.json
+tap-postgres -c config.json --discover > properties-discover.json
 
 # # cat properties.json | jq .
 
